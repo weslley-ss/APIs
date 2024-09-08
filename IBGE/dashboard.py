@@ -1,7 +1,38 @@
 import json
 import requests
 import pandas as pd
+import numpy as np
 import streamlit as st
+
+
+# Função de períodos:
+def periodos(metadados):
+    # Criando um array de períodos com base nos metadados
+    periodos = np.arange(metadados['periodicidade']['inicio'], metadados['periodicidade']['fim'])
+    if len(periodos) == 0:
+        st.write(f"Dados disponíveis apenas no período: :green[{metadados['periodicidade']['inicio']}]")
+        periodos_checl = {metadados['periodicidade']['inicio']: True}
+    else: 
+        with st.expander("Períodos:"):
+            periodos_checks = {}
+
+            # Estado inicial para selecionar/desselecionar todos
+            select_all = st.checkbox(":gray[Selecionar Tudo]:", value=True)
+
+            # Criando 4 colunas
+            cols = st.columns(4)
+
+            # Adicionando checkboxes nas colunas de forma sequencial
+            for i, periodo in enumerate(periodos):
+                col_index = i % 4  # Determina a posição de forma horizontal
+                with cols[col_index]:
+                    # Adiciona o checkbox à coluna correspondente, controlado pelo estado do select_all
+                    checked = st.checkbox(f"{periodo}", value=select_all)
+                    periodos_checks.update({periodo: checked})
+
+
+
+
 
 # título do dashboard
 st.title("Dashboard de análise de dados IBGE:")
@@ -46,8 +77,12 @@ url_metadados = f"https://servicodados.ibge.gov.br/api/v3/agregados/{id_escolhid
 resposta_metadados = requests.get(url_metadados)
 if resposta_metadados.status_code == 200:
     metadados = resposta_metadados.json()
-    
-    with st.expander("Visualizar"):
+    st.write(metadados['nome'])
+
+    if metadados['periodicidade']['frequencia'] == 'anual':
+        periodos(metadados)
+
+    with st.expander("Metadados"):
         st.write(metadados)
         st.markdown(f"URL: {url_metadados}")
 else: 
