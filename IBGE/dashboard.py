@@ -4,38 +4,74 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
+def metadados(cod_agregado = None):
+    # Requisição dos metadados do agregado
+    url_metadados = f"https://servicodados.ibge.gov.br/api/v3/agregados/{cod_agregado}/metadados"
+
+    resposta_metadados = requests.get(url_metadados)
+    if resposta_metadados.status_code == 200:
+        metadados = resposta_metadados.json()
+        with st.expander("Metadados", expanded=True):
+            st.markdown(f"URL: {url_metadados}")
+            st.json(metadados)
+    else: 
+        st.markdown(f"Metadados não encontrados [:red[{resposta_metadados.status_code}]]")
+        st.markdown(f"Comunicação por: {url_metadados}")
+
+def variaveis(cod_agregado = None):
+    # Requisição dos metadados do agregado
+    url_metadados = f"https://servicodados.ibge.gov.br/api/v3/agregados/{cod_agregado}/metadados"
+
+    resposta_metadados = requests.get(url_metadados)
+    if resposta_metadados.status_code == 200:
+        metadados = resposta_metadados.json()
+
+        with st.expander("Variáveis", expanded=True):
+            df = pd.DataFrame(metadados["variaveis"], dtype=str)
+            df['id'] = df['id'].astype(str)
+
+            # Capitalizar a primeira letra de cada nome de coluna
+            df.columns = [col.upper() for col in df.columns]
+            st.table(df.iloc[:, 0:2])
+    else: 
+        st.markdown(f"Variáveis não encontradas [:red[{resposta_metadados.status_code}]]")
+        st.markdown(f"Comunicação por: {url_metadados}")
 
 # Função de períodos:
-def periodos(metadados):
-    # Criando um array de períodos com base nos metadados
-    periodos = np.arange(metadados['periodicidade']['inicio'], metadados['periodicidade']['fim'])
-    if len(periodos) == 0:
-        st.write(f"Dados disponíveis apenas no período: :green[{metadados['periodicidade']['inicio']}]")
-        periodos_checl = {metadados['periodicidade']['inicio']: True}
-    else: 
-        with st.expander("Períodos:"):
-            periodos_checks = {}
+def periodos(cod_agregado = None):
+    # Requisição dos metadados do agregado
+    url_metadados = f"https://servicodados.ibge.gov.br/api/v3/agregados/{cod_agregado}/metadados"
 
-            # Estado inicial para selecionar/desselecionar todos
-            select_all = st.checkbox(":gray[Selecionar Tudo]:", value=True)
+    resposta_metadados = requests.get(url_metadados)
+    if resposta_metadados.status_code == 200:
+        metadados = resposta_metadados.json()
+        # Criando um array de períodos com base nos metadados
+        periodos = np.arange(metadados['periodicidade']['inicio'], metadados['periodicidade']['fim'])
+        if len(periodos) == 0:
+            st.write(f"Dados disponíveis apenas no período: :green[{metadados['periodicidade']['inicio']}]")
+            periodos_checl = {metadados['periodicidade']['inicio']: True}
+        else: 
+            with st.expander("Períodos:", expanded=True):
+                periodos_checks = {}
 
-            # Criando 4 colunas
-            cols = st.columns(4)
+                # Estado inicial para selecionar/desselecionar todos
+                select_all = st.checkbox(":gray[Selecionar Tudo]:", value=True)
 
-            # Adicionando checkboxes nas colunas de forma sequencial
-            for i, periodo in enumerate(periodos):
-                col_index = i % 4  # Determina a posição de forma horizontal
-                with cols[col_index]:
-                    # Adiciona o checkbox à coluna correspondente, controlado pelo estado do select_all
-                    checked = st.checkbox(f"{periodo}", value=select_all)
-                    periodos_checks.update({periodo: checked})
+                # Criando 4 colunas
+                cols = st.columns(4)
 
+                # Adicionando checkboxes nas colunas de forma sequencial
+                for i, periodo in enumerate(periodos):
+                    col_index = i % 4  # Determina a posição de forma horizontal
+                    with cols[col_index]:
+                        # Adiciona o checkbox à coluna correspondente, controlado pelo estado do select_all
+                        checked = st.checkbox(f"{periodo}", value=select_all)
+                        periodos_checks.update({periodo: checked})
 
-
-
-
-# título do dashboard
+#----------------------------------------------------------------
+#----------------------------------------------------------------
 st.title("Dashboard de análise de dados IBGE:")
+#----------------------------------------------------------------
 
 # Requisição dos dados
 ibge = "https://servicodados.ibge.gov.br/api/v3/agregados"
@@ -71,23 +107,27 @@ elemento = f":green[{len(options_agr)}]"
 agregados = st.selectbox(f"Datasets disponíveis para obtenção de dados: [{elemento}]", options_agr)
 id_escolhido = agregados.split(" - ")[0]
 
-st.subheader("Metadados")
-# Requisição dos metadados do agregado
-url_metadados = f"https://servicodados.ibge.gov.br/api/v3/agregados/{id_escolhido}/metadados"
-resposta_metadados = requests.get(url_metadados)
-if resposta_metadados.status_code == 200:
-    metadados = resposta_metadados.json()
-    st.write(metadados['nome'])
+#----------------------------------------------------------------
+st.header("Informações", anchor="Seletor", divider=True)
+seletor = st.multiselect(
+    "Dados disponíveis:",
+    ["Variáveis","Metadados","Períodos", "Folium - dados Geoespciais"]
+)
 
-    if metadados['periodicidade']['frequencia'] == 'anual':
-        periodos(metadados)
+for s in seletor:
+    if s == "Metadados":
+        metadados(cod_agregado=id_escolhido)
+    elif s == "Variáveis":
+        variaveis(cod_agregado=id_escolhido)
+    elif s == "Períodos":
+        periodos(cod_agregado=id_escolhido)
 
-    with st.expander("Metadados"):
-        st.write(metadados)
-        st.markdown(f"URL: {url_metadados}")
-else: 
-    elemento = f""
-    st.markdown(f"Metadados não encontrados [:red[{resposta_metadados.status_code}]]")
-    st.markdown(f"Tentativa de comunicação por: {url_metadados}")
 
+
+#url_view = "https://servicodados.ibge.gov.br/api/v3/agregados/706/variaveis?view=OLAP&localidades=BR"
+#res_view = requests.get(url_view)
+#view = res_view.json()
+#st.write(view)
+
+#url_view = "https://servicodados.ibge.gov.br/api/v3/agregados/706/variaveis?view=flat&localidades=BR"
 
