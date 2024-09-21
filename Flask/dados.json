@@ -1,0 +1,14 @@
+[
+    {"id": 1, "nome": "Café da manhã", "horario": "9:00"},
+    {"id": 2, "nome": "Tirar lixo", "horario": "9:30"},
+    {"id": 3, "nome": "Almoço", "horario": "12:00"},
+    {"id": 4, "nome": "Reunião de trabalho", "horario": "14:00"},
+    {"id": 5, "nome": "Lanche da tarde", "horario": "16:00"},
+    {"id": 6, "nome": "Exercício físico", "horario": "17:00"},
+    {"id": 7, "nome": "Tomar banho", "horario": "18:30"},
+    {"id": 8, "nome": "Jantar", "horario": "19:00"},
+    {"id": 9, "nome": "Tempo de lazer", "horario": "20:00"},
+    {"id": 10, "nome": "Leitura", "horario": "21:00"},
+    {"id": 11, "nome": "Preparar para dormir", "horario": "22:30"}
+]
+
